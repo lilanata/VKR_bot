@@ -1,0 +1,757 @@
+{% extends 'base.html' %}
+{% block title %}Публикация материалов{% endblock %}
+
+{% block content %}
+  <style>
+    .materials-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0;
+    }
+
+    .materials-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2rem 0;
+    }
+
+    .materials-header h2 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .materials-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .materials-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .section-card {
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      box-shadow: var(--shadow-lg);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent-gradient);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .section-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .section-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+      border-color: rgba(0, 212, 170, 0.2);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section-header h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .groups-count, .files-count {
+      background: rgba(0, 212, 170, 0.1);
+      color: var(--accent-primary);
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: 1px solid rgba(0, 212, 170, 0.2);
+    }
+
+    .groups-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .group-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 0.75rem;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .group-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--accent-gradient);
+      transition: left 0.3s ease;
+      z-index: -1;
+      opacity: 0.1;
+    }
+
+    .group-card:hover {
+      transform: translateX(8px);
+      border-color: var(--accent-primary);
+      box-shadow: var(--shadow-md);
+    }
+
+    .group-card:hover::before {
+      left: 0;
+    }
+
+    .group-icon {
+      font-size: 1.5rem;
+      width: 3rem;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 212, 170, 0.1);
+      border-radius: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .group-name {
+      flex: 1;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .group-arrow {
+      font-size: 1.25rem;
+      color: var(--accent-primary);
+      transition: transform 0.3s ease;
+    }
+
+    .group-card:hover .group-arrow {
+      transform: translateX(4px);
+    }
+
+    .upload-card {
+      background: linear-gradient(135deg, var(--bg-glass) 0%, rgba(0, 212, 170, 0.02) 100%);
+    }
+
+    .upload-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .upload-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-label {
+      display: block;
+    }
+
+    .label-text {
+      display: block;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .styled-input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: var(--bg-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.5rem;
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .styled-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+      background: var(--bg-tertiary);
+    }
+
+    .file-input-wrapper {
+      position: relative;
+    }
+
+    .file-input {
+      opacity: 0;
+      position: absolute;
+      z-index: -1;
+    }
+
+    .file-input-label {
+      display: block;
+      cursor: pointer;
+    }
+
+    .file-input-display {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg-secondary);
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 0.75rem;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .file-input-display:hover {
+      border-color: var(--accent-primary);
+      background: var(--bg-tertiary);
+    }
+
+    .file-icon {
+      font-size: 2rem;
+      opacity: 0.7;
+    }
+
+    .file-text {
+      flex: 1;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .file-button {
+      padding: 0.5rem 1rem;
+      background: var(--accent-primary);
+      color: #000;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+
+    .file-input-display:hover .file-button {
+      background: var(--accent-hover);
+      transform: scale(1.05);
+    }
+
+    .upload-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 1rem 2rem;
+      background: var(--accent-gradient);
+      color: #000;
+      border: none;
+      border-radius: 0.75rem;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0.2) 100%);
+      transition: left 0.5s ease;
+    }
+
+    .upload-button:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .upload-button:hover::before {
+      left: 100%;
+    }
+
+    .button-icon {
+      font-size: 1.1em;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state small {
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    .group-materials-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .group-header {
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .breadcrumb {
+      margin-bottom: 1rem;
+    }
+
+    .breadcrumb-link {
+      color: var(--accent-primary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .breadcrumb-link:hover {
+      color: var(--accent-hover);
+    }
+
+    .group-header h2 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .upload-section, .files-section {
+      margin-bottom: 2rem;
+    }
+
+    .files-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .file-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem;
+      background: var(--bg-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 0.75rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .file-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent-gradient);
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform 0.3s ease;
+    }
+
+    .file-card:hover {
+      transform: translateX(4px);
+      border-color: rgba(0, 212, 170, 0.2);
+      box-shadow: var(--shadow-md);
+    }
+
+    .file-card:hover::before {
+      transform: scaleY(1);
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .file-icon-type {
+      font-size: 2rem;
+      width: 3rem;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 212, 170, 0.1);
+      border-radius: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .file-details {
+      flex: 1;
+    }
+
+    .file-name {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+      word-break: break-all;
+    }
+
+    .file-size {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .file-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .action-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .download-button {
+      background: rgba(0, 212, 170, 0.1);
+      color: var(--accent-primary);
+      border: 1px solid rgba(0, 212, 170, 0.2);
+    }
+
+    .download-button:hover {
+      background: rgba(0, 212, 170, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .delete-button {
+      background: rgba(255, 77, 77, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(255, 77, 77, 0.2);
+    }
+
+    .delete-button:hover {
+      background: rgba(255, 77, 77, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .delete-form {
+      display: inline;
+    }
+
+    @media (max-width: 768px) {
+      .materials-container {
+        padding: 0 1rem;
+      }
+
+      .file-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+      }
+
+      .file-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .action-button {
+        flex: 1;
+        justify-content: center;
+        min-width: 120px;
+      }
+    }
+  </style>
+  <div class="materials-container">
+    {% if not selected_group %}
+      <div class="materials-header">
+        <h2>📁 Публикация материалов</h2>
+        <div class="header-subtitle">
+          Управляйте учебными материалами для ваших групп
+        </div>
+      </div>
+
+      <div class="materials-grid">
+        <div class="existing-groups-section">
+          <div class="section-card">
+            <div class="section-header">
+              <h3>📚 Существующие группы</h3>
+              <div class="groups-count">{{ groups|length if groups else 0 }} групп</div>
+            </div>
+
+            {% if groups %}
+              <div class="groups-grid">
+                {% for grp in groups %}
+                  <a href="{{ url_for('materials.view_materials') }}?group={{ grp }}" class="group-card">
+                    <div class="group-icon">📂</div>
+                    <div class="group-name">{{ grp }}</div>
+                    <div class="group-arrow">→</div>
+                  </a>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <p>Пока нет ни одной группы</p>
+                <small>Создайте первую группу, загрузив файл</small>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="new-group-section">
+          <div class="section-card upload-card">
+            <div class="section-header">
+              <h3>➕ Создать новую группу</h3>
+              <div class="upload-subtitle">Загрузите первый файл для новой группы</div>
+            </div>
+
+            <form method="POST" action="{{ url_for('materials.upload_material') }}" enctype="multipart/form-data"
+                  class="upload-form">
+              <div class="form-row">
+                <div class="input-wrapper">
+                  <label class="input-label">
+                    <span class="label-text">Название группы</span>
+                    <input type="text" name="group" placeholder="Например: ИС-101" required
+                           class="styled-input group-input"/>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="file-input-wrapper">
+                  <label class="file-input-label">
+                    <input type="file" name="file" required class="file-input"/>
+                    <div class="file-input-display">
+                      <div class="file-icon">📎</div>
+                      <span class="file-text">Выберите файл</span>
+                      <div class="file-button">Обзор</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" class="upload-button">
+                <span class="button-icon">📤</span>
+                Создать группу и загрузить файл
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    {% else %}
+      <div class="group-materials-container">
+        <div class="group-header">
+          <div class="breadcrumb">
+            <a href="{{ url_for('materials.view_materials') }}" class="breadcrumb-link">
+              ← Все группы
+            </a>
+          </div>
+          <h2>📁 Группа: {{ selected_group }}</h2>
+          <div class="header-subtitle">
+            Управление материалами для группы "{{ selected_group }}"
+          </div>
+        </div>
+
+        <div class="upload-section">
+          <div class="section-card upload-card">
+            <div class="section-header">
+              <h3>📤 Загрузить новый файл</h3>
+            </div>
+
+            <form method="POST" action="{{ url_for('materials.upload_material') }}" enctype="multipart/form-data"
+                  class="upload-form">
+              <input type="hidden" name="group" value="{{ selected_group }}"/>
+
+              <div class="form-row">
+                <div class="file-input-wrapper">
+                  <label class="file-input-label">
+                    <input type="file" name="file" required class="file-input"/>
+                    <div class="file-input-display">
+                      <div class="file-icon">📎</div>
+                      <span class="file-text">Выберите файл для загрузки</span>
+                      <div class="file-button">Обзор</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" class="upload-button">
+                <span class="button-icon">📤</span>
+                Загрузить файл
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div class="files-section">
+          <div class="section-card">
+            <div class="section-header">
+              <h3>📋 Файлы в группе "{{ selected_group }}"</h3>
+              <div class="files-count">{{ files|length if files else 0 }} файлов</div>
+            </div>
+
+            {% if files and files|length > 0 %}
+              <div class="files-grid">
+                {% for f in files %}
+                  <div class="file-card">
+                    <div class="file-info">
+                      <div class="file-icon-type">
+                        {% if f.name.endswith(('.pdf', '.PDF')) %}
+                          📄
+                        {% elif f.name.endswith(('.doc', '.docx', '.DOC', '.DOCX')) %}
+                          📝
+                        {% elif f.name.endswith(('.xls', '.xlsx', '.XLS', '.XLSX')) %}
+                          📊
+                        {% elif f.name.endswith(('.ppt', '.pptx', '.PPT', '.PPTX')) %}
+                          📈
+                        {% elif f.name.endswith(('.jpg', '.jpeg', '.png', '.gif', '.JPG', '.JPEG', '.PNG', '.GIF')) %}
+                          🖼️
+                        {% elif f.name.endswith(('.zip', '.rar', '.7z', '.ZIP', '.RAR', '.7Z')) %}
+                          📦
+                        {% else %}
+                          📎
+                        {% endif %}
+                      </div>
+                      <div class="file-details">
+                        <div class="file-name">{{ f.name }}</div>
+                        <div class="file-size">{{ f.size }}</div>
+                      </div>
+                    </div>
+
+                    <div class="file-actions">
+                      <a href="{{ url_for('materials.download_material', group=selected_group, filename=f.name) }}"
+                         class="action-button download-button" title="Скачать">
+                        <span class="button-icon">⬇️</span>
+                        Скачать
+                      </a>
+
+                      <form method="POST" action="{{ url_for('materials.delete_material') }}"
+                            class="delete-form"
+                            onclick="return confirm('Вы уверены, что хотите удалить файл {{ f.name }}?')">
+                        <input type="hidden" name="group" value="{{ selected_group }}"/>
+                        <input type="hidden" name="filename" value="{{ f.name }}"/>
+                        <button type="submit" class="action-button delete-button" title="Удалить">
+                          <span class="button-icon">🗑️</span>
+                          Удалить
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="empty-state">
+                <div class="empty-icon">📂</div>
+                <p>В этой группе ещё нет файлов</p>
+                <small>Загрузите первый файл с помощью формы выше</small>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Для каждого скрытого <input class="file-input"> подписываемся на change
+      document.querySelectorAll('.file-input').forEach(function (input) {
+        input.addEventListener('change', function () {
+          // Получаем выбранное имя файла (первый файл, если множественный выбор не разрешён)
+          var fileName = '';
+          if (this.files && this.files.length > 0) {
+            fileName = this.files[0].name;
+          } else {
+            fileName = 'Выберите файл';
+          }
+          // Находим ближайший .file-input-display и внутри него элемент .file-text
+          var display = this.closest('.file-input-wrapper').querySelector('.file-text');
+          if (display) {
+            display.textContent = fileName;
+          }
+        });
+      });
+    });
+  </script>
+{% endblock %}

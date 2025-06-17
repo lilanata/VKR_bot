@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% block title %}Пользователи{% endblock %}
+{% block content %}
+  <div class="card">
+    <h2>👥 Список пользователей</h2>
+
+    <div class="filter-panel">
+      <input type="text" id="filter_group" placeholder="🔍 Поиск по группе..."/>
+    </div>
+
+    <div class="users-list">
+      {% for user in users_list %}
+        <div class="user-card"
+             data-group="{{ user.group or '' }}"
+            {% if not read_only %}
+             onclick="openEditModal({
+                 telegram_id: '{{ user.telegram_id }}',
+                 telegram_username: '{{ user.telegram_username }}',
+                 email: '{{ user.email }}',
+                 role: '{{ user.role }}',
+                 password: '{{ user.password }}',
+                 faculty: '{{ user.faculty }}',
+                 course: '{{ user.course }}',
+                 group: '{{ user.group }}',
+                 education_level: '{{ user.education_level }}',
+                 study_form: '{{ user.study_form }}',
+                 notifications: '{{ user.notifications }}'
+                 })"
+            {% endif %}
+        >
+
+          <div class="user-header">
+            <div class="user-name">
+              <a href="https://t.me/{{ user.telegram_username }}" class="telegram-link">
+                {{ user.telegram_username or 'Без имени' }}
+              </a>
+            </div>
+            <div class="user-avatar">
+              {{ (user.telegram_username or 'U')[0].upper() }}
+            </div>
+          </div>
+
+          <div class="user-details">
+            <div class="user-info">
+              <span class="user-info-icon">📧</span>
+              <div class="user-info-content">
+                <span class="info-label">Почта:</span>
+                <span class="info-value {{ 'empty-value' if not user.email }}">
+                  {{ user.email or '—' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="user-info">
+              <span class="user-info-icon">🎓</span>
+              <div class="user-info-content">
+                <span class="info-label">Факультет:</span>
+                <span class="info-value {{ 'empty-value' if not user.faculty }}">
+                  {{ user.faculty or '—' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="user-info">
+              <span class="user-info-icon">📘</span>
+              <div class="user-info-content">
+                <span class="info-label">Курс:</span>
+                <span class="info-value {{ 'empty-value' if not user.course }}">
+                  {{ user.course or '—' }}
+                </span>
+                <span class="info-separator">|</span>
+                <span class="info-label">Группа:</span>
+                <span class="info-value {{ 'empty-value' if not user.group }}">
+                  {{ user.group or '—' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="user-info">
+              <span class="user-info-icon">🏛</span>
+              <div class="user-info-content">
+                <span class="info-label">Уровень:</span>
+                <span class="info-value {{ 'empty-value' if not user.education_level }}">
+                  {{ user.education_level or '—' }}
+                </span>
+                <span class="info-separator">|</span>
+                <span class="info-label">Форма:</span>
+                <span class="info-value {{ 'empty-value' if not user.study_form }}">
+                  {{ user.study_form or '—' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="user-info">
+              <span class="user-info-icon">🔔</span>
+              <div class="user-info-content">
+                <span class="info-label">Уведомления:</span>
+                <span class="notification-status {{ 'on' if user.notifications else 'off' }}">
+                  {{ 'включены' if user.notifications else 'отключены' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {% if user.group or user.faculty %}
+            <div class="user-tags">
+              {% if user.group %}
+                <span class="user-tag">{{ user.group }}</span>
+              {% endif %}
+              {% if user.faculty %}
+                <span class="user-tag">{{ user.faculty }}</span>
+              {% endif %}
+              {% if user.notifications %}
+                <span class="user-tag">🔔</span>
+              {% endif %}
+              {% if user.role %}
+                <span class="user-tag">{{ "Преподаватель" if user.role == "teacher" else "Студент" }}</span>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div id="editModal" class="modal-wrapper">
+    <div class="modal-card">
+      <h3 id="header">Редактирование пользователя</h3>
+      <form id="editForm" method="POST" action="{{ url_for('users.update_user') }}">
+        <input type="hidden" id="telegram_id" name="telegram_id"/>
+
+        <div class="input-group">
+          <label>Имя пользователя в telegram</label>
+          <input type="text" name="telegram_username" id="telegram_username" required/>
+        </div>
+
+        <div class="input-group">
+          <label>Почта</label>
+          <input type="email" name="email" id="email"/>
+        </div>
+
+        <div class="input-group">
+          <label>Пароль</label>
+          <input type="text" name="password" id="password"/>
+        </div>
+
+        <div class="input-group">
+          <label>Роль</label>
+          <div class="select-wrapper">
+            <select name="role" id="role" required>
+              <option value="teacher">Учитель</option>
+              <option value="student">Студент</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Уровень обучения</label>
+          <input type="text" name="education_level" id="education_level"/>
+        </div>
+
+        <div class="input-group">
+          <label>Форма обучения</label>
+          <input type="text" name="study_form" id="study_form"/>
+        </div>
+
+        <div class="input-group">
+          <label>Факультет</label>
+          <input type="text" name="faculty" id="faculty"/>
+        </div>
+
+        <div class="input-group">
+          <label>Курс</label>
+          <input type="text" name="course" id="course"/>
+        </div>
+
+        <div class="input-group">
+          <label>Группа</label>
+          <input type="text" name="group" id="group"/>
+        </div>
+
+        <div class="input-group notif-row">
+          <label>Уведомления включены:</label>
+          <input type="checkbox" name="notifications_enabled" id="notifications_enabled"/>
+        </div>
+
+        <div class="button-submit-panel">
+          <button type="submit" class="btn-toggle-delete" id="deleteBtn">Удалить</button>
+          <button type="button" class="btn-toggle" onclick="closeEditModal()">Отмена</button>
+          <button type="submit" class="btn-toggle">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const filterGroup = document.getElementById("filter_group");
+    filterGroup.addEventListener("input", () => {
+      const val = filterGroup.value.trim().toLowerCase();
+      document.querySelectorAll(".user-card").forEach(card => {
+        const grp = (card.dataset.group || "").toLowerCase();
+        card.style.display = grp.includes(val) ? "" : "none";
+      });
+    });
+
+    function openEditModal(user) {
+      document.getElementById("header").textContent = `Редактирование пользователя ${user.telegram_id}`;
+      document.getElementById("telegram_id").value = user.telegram_id;
+      document.getElementById("telegram_username").value = user.telegram_username || "";
+      document.getElementById("email").value = user.email || "";
+      document.getElementById("password").value = "";
+      document.getElementById("role").value = user.role;
+      document.getElementById("education_level").value = user.education_level || "";
+      document.getElementById("study_form").value = user.study_form || "";
+      document.getElementById("faculty").value = user.faculty || "";
+      document.getElementById("course").value = user.course || "";
+      document.getElementById("group").value = user.group || "";
+      document.getElementById("notifications_enabled").checked = String(user.notifications).toLowerCase() === "true";
+      document.getElementById("editModal").style.display = "flex";
+    }
+
+    function closeEditModal() {
+      document.getElementById("editModal").style.display = "none";
+    }
+
+    document.getElementById("editModal").addEventListener("click", event => {
+      const modalCard = document.querySelector(".modal-card");
+      if (!modalCard.contains(event.target)) closeEditModal();
+    });
+
+    document.getElementById("editForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      this.submit();
+      closeEditModal();
+    });
+
+    document.getElementById("deleteBtn").addEventListener("click", function () {
+      const form = document.getElementById("editForm");
+      form.action = "{{ url_for('users.delete_user') }}";
+      form.submit();
+    });
+  </script>
+{% endblock %}

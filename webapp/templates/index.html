@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% block title %}Основная{% endblock %}
+{% block content %}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .stats-card {
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .stats-card h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .stat {
+      background: var(--bg-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .stat:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: rgba(0, 212, 170, 0.2);
+    }
+
+    .stat-full {
+      grid-column: 1 / -1;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .command-table {
+      margin-top: 1rem;
+      background: var(--bg-tertiary);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .command-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 2fr 4fr;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background-color 0.2s ease;
+    }
+
+    .command-row:hover {
+      background: rgba(0, 212, 170, 0.05);
+    }
+
+    .command-row:last-child {
+      border-bottom: none;
+    }
+
+    .command-head {
+      background: var(--bg-secondary);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    .command-head:hover {
+      background: var(--bg-secondary);
+    }
+
+    .command-table code {
+      background: rgba(0, 212, 170, 0.1);
+      color: var(--accent-primary);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 0.875rem;
+    }
+
+    .aligned-times {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 0.875rem;
+    }
+
+    .dim {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .status-grid, .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .button-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .command-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+
+      .aligned-times {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stats-card h2,
+      .control-panel h2,
+      .status-banner h2 {
+        font-size: 1.5rem;
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: -200px 0;
+      }
+      100% {
+        background-position: calc(200px + 100%) 0;
+      }
+    }
+  </style>
+  <body>
+  <div class="container">
+    <div class="status-banner">
+      <h2>🛰️ Состояние системы</h2>
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="status-label">Бот</div>
+          <div class="status-value {{ 'on' if bot_enabled else 'off' }}">
+            {{ 'Включён' if bot_enabled else 'Выключен' }}
+          </div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Тех. работы</div>
+          <div class="status-value {{ 'on' if maintenance_mode else 'off' }}">
+            {{ 'Включены' if maintenance_mode else 'Выключены' }}
+          </div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Проверки</div>
+          <div class="status-label" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+            Текущий интервал: <strong>{{ interval }} мин</strong>
+          </div>
+          <div class="status-value {{ 'on' if scheduled_enabled else 'off' }}">
+            {{ 'Включены' if scheduled_enabled else 'Отключены' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if current_role != 'teacher' %}
+      <div class="control-panel">
+        <h2>⚙️ Управление</h2>
+        <div class="button-panel">
+          <a href="{{ url_for('main.toggle_bot') }}" class="menu-item">
+            {{ 'Выключить бота' if bot_enabled else 'Включить бота' }}
+          </a>
+          <a href="{{ url_for('main.toggle_maintenance') }}" class="menu-item">
+            {{ 'Выключить тех.работы' if maintenance_mode else 'Включить тех.работы' }}
+          </a>
+          <a href="{{ url_for('main.toggle_scheduled') }}" class="menu-item">
+            {{ 'Отключить проверки' if scheduled_enabled else 'Включить проверки' }}
+          </a>
+          <form action="{{ url_for('check.run_check') }}" method="post" style="display: contents;">
+            <button type="submit" class="menu-item">
+              Запустить проверку
+            </button>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="stats-card">
+      <h2>📊 Общая статистика</h2>
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-label">Всего проверок</div>
+          <div class="stat-value">{{ total_schedule }}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Последняя проверка</div>
+          <div class="stat-value" style="font-size: 1.2rem;">{{ last_schedule or '—' }}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Всего выполнений команд</div>
+          <div class="stat-value">{{ total_commands }}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Новых пользователей</div>
+          <div class="stat-value">{{ new_users }}</div>
+        </div>
+        <div class="stat stat-full">
+          <div class="stat-label">📈 Использование</div>
+          <div class="command-table">
+            <div class="command-row command-head">
+              <div>Команда</div>
+              <div>Кол-во</div>
+              <div>Последнее</div>
+              <div class="aligned-times">
+                <div>Мин</div>
+                <div>Ср</div>
+                <div>Макс</div>
+                <div>Посл</div>
+              </div>
+            </div>
+            {% for cmd, data in commands_data.items() %}
+              <div class="command-row">
+                <div><code>{{ cmd }}</code></div>
+                <div>{{ data.count }}</div>
+                <div class="dim">{{ data.last or '—' }}</div>
+                <div class="aligned-times">
+                  {% if command_stats.get(cmd) %}
+                    <div>{{ command_stats[cmd].min }}</div>
+                    <div>{{ command_stats[cmd].avg }}</div>
+                    <div>{{ command_stats[cmd].max }}</div>
+                    <div>{{ command_stats[cmd].last_duration }}</div>
+                  {% else %}
+                    <div>—</div>
+                    <div>—</div>
+                    <div>—</div>
+                    <div>—</div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Добавляем интерактивности
+    document.addEventListener('DOMContentLoaded', function () {
+      // Анимация появления элементов
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      });
+
+      document.querySelectorAll('.status-banner, .control-panel, .stats-card').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(el);
+      });
+
+      // Hover эффекты для статистики
+      document.querySelectorAll('.stat').forEach(stat => {
+        stat.addEventListener('mouseenter', function () {
+          this.style.transform = 'translateY(-4px) scale(1.02)';
+        });
+
+        stat.addEventListener('mouseleave', function () {
+          this.style.transform = 'translateY(0) scale(1)';
+        });
+      });
+    });
+  </script>
+{% endblock %}

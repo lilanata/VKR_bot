@@ -1,0 +1,683 @@
+{% extends "base.html" %}
+{% block title %}Настройки{% endblock %}
+{% block content %}
+  <style>
+    body {
+      font-family: var(--font-stack);
+      background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(0, 255, 136, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(0, 255, 136, 0.03) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent) 0%, #4dabf7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+
+    .page-subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      font-weight: 400;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--gradient-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), #4dabf7);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg), 0 0 30px rgba(0, 255, 136, 0.1);
+      border-color: var(--border-hover);
+    }
+
+    .card-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--accent), #4dabf7);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .input-group input,
+    .input-group textarea {
+      width: 100%;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      color: var(--text);
+      border-radius: 0.75rem;
+      font-family: var(--font-stack);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+
+    .input-group input:focus,
+    .input-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(0, 255, 136, 0.1);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn {
+      padding: 0.875rem 1.5rem;
+      border: none;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+      color: #000;
+      box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--danger) 0%, #ff3333 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 77, 77, 0.3);
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 77, 77, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-one-more-darker);
+      color: var(--text);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent);
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      justify-content: center;
+    }
+
+    .commands-section {
+      grid-column: 1 / -1;
+    }
+
+    .commands-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .command-card {
+      background: var(--bg-one-more-darker);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .command-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .command-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .command-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .command-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .command-info {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-content {
+      background: var(--gradient-card);
+      border: 1px solid var(--border-color);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      width: 95%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideIn 0.3s ease;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--danger);
+    }
+
+    .message-field {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .message-field input {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .message-field textarea {
+      flex: 2;
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    .remove-btn {
+      background: var(--danger);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      width: 35px;
+      height: 35px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+
+    .remove-btn:hover {
+      background: #ff3333;
+      transform: scale(1.1);
+    }
+
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .status-indicator.success {
+      background: rgba(0, 255, 136, 0.2);
+      color: var(--ok);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+    }
+
+    .status-indicator::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .settings-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .page-title {
+        font-size: 2rem;
+      }
+
+      .card {
+        padding: 1.5rem;
+      }
+
+      .modal-content {
+        padding: 1.5rem;
+      }
+
+      .message-field {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .commands-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+  </style>
+  </head>
+  <body>
+  <div class="container">
+    <div class="page-header">
+      <h1 class="page-title">⚙️ Настройки бота</h1>
+      <p class="page-subtitle">Управление конфигурацией и командами Telegram бота</p>
+    </div>
+
+    <div class="settings-grid">
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon">🤖</div>
+          Профиль бота
+        </div>
+        <form method="post" action="{{ url_for('settings.update_bot_profile') }}">
+          <div class="input-group">
+            <label for="bot_name">Имя бота</label>
+            <input type="text" id="bot_name" name="bot_name" value="{{ bot_name }}" required>
+          </div>
+          <div class="input-group">
+            <label for="bot_about">Описание бота</label>
+            <textarea id="bot_about" name="bot_about" maxlength="120" required rows="3">{{ bot_about }}</textarea>
+          </div>
+          <div class="button-group">
+            <button type="submit" class="btn btn-primary">💾 Сохранить профиль</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon">⏰</div>
+          Интервал проверки
+        </div>
+        <form method="post" action="{{ url_for('settings.edit_interval') }}">
+          <div class="input-group">
+            <label for="interval">Интервал в минутах</label>
+            <input type="number" id="interval" name="interval" min="1" value={{ interval }} required>
+            <small style="color: var(--text-muted); margin-top: 0.5rem; display: block;">
+              Как часто бот будет проверять уведомления для отправки
+            </small>
+          </div>
+          <div class="status-indicator success">
+            <span>Активно: каждые {{ interval }} минут</span>
+          </div>
+          <div class="button-group">
+            <button type="submit" class="btn btn-primary">⚡ Обновить интервал</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card commands-section">
+        <div class="card-title">
+          <div class="card-icon">💬</div>
+          Команды бота
+        </div>
+
+        <div class="commands-grid">
+          {% for cfg in command_configs %}
+            <div class="command-card" onclick='openEditModal({{ cfg|tojson }})'>
+              <div class="command-name">/{{ cfg.command }}</div>
+              <div class="command-info">{{ cfg.info }}</div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="button-group">
+          <button onclick="openAddCommandModal()" class="btn btn-primary">➕ Добавить команду</button>
+          <button onclick="importCommands()" class="btn btn-secondary">📥 Импорт команд</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="addCommandModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">➕ Добавление новой команды</h3>
+        <button class="close-btn" onclick="closeAddCommandModal()">&times;</button>
+      </div>
+      <form method="post" action="{{ url_for('settings.create_command') }}">
+        <div class="input-group">
+          <label for="new_command_name">Название команды</label>
+          <input type="text" id="new_command_name" name="new_command_name" placeholder="Введите название без /"
+                 required>
+        </div>
+        <div class="input-group">
+          <label for="new_command_name">Описание команды</label>
+          <input type="text" id="new_command_info" name="new_command_info" placeholder="Введите краткое описание"
+                 required>
+        </div>
+        <div class="button-group">
+          <button type="button" class="btn btn-secondary" onclick="closeAddCommandModal()">Отмена</button>
+          <button type="submit" class="btn btn-primary">Создать команду</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="editModalTitle"></h3>
+        <button class="close-btn" onclick="closeEditModal()">&times;</button>
+      </div>
+      <form id="editForm" method="POST" action="{{ url_for('settings.update_command') }}">
+        <input type="hidden" id="command_name" name="command_name">
+        <input type="hidden" id="command_info" name="command_info">
+
+        <div id="messagesContainer"></div>
+
+        <div class="button-group">
+          <button type="button" class="btn btn-danger" onclick="deleteCommand()">🗑️ Удалить команду</button>
+          <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Отмена</button>
+          <button type="button" class="btn btn-secondary" onclick="addMessageField()">➕ Добавить поле</button>
+          <button type="submit" class="btn btn-primary">💾 Сохранить изменения</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    messageIndex = 0;
+
+    function openEditModal(cfg) {
+      const config = typeof cfg === 'string' ? JSON.parse(cfg) : cfg;
+
+      document.getElementById('editModalTitle').textContent = `✏️ Редактирование команды /${config.command}`;
+      document.getElementById('command_name').value = config.command;
+      document.getElementById('command_info').value = config.info;
+
+      const container = document.getElementById('messagesContainer');
+      container.innerHTML = '';
+
+      if (config.messages && typeof config.messages === 'object') {
+        Object.entries(config.messages).forEach(([key, value]) => {
+          addMessageField(key, value);
+        });
+      } else {
+        addMessageField();
+      }
+
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function openAddCommandModal() {
+      document.getElementById('addCommandModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+
+    function closeAddCommandModal() {
+      document.getElementById('addCommandModal').style.display = 'none';
+    }
+
+    function escapeHtml(unsafe) {
+      if (!unsafe) return '';
+      return unsafe.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function addMessageField(key = '', value = '') {
+      messageIndex++;
+      const template = `
+      <div class="message-group">
+        <div class="input-group row">
+          <input
+            type="text"
+            name="key__${messageIndex}"
+            placeholder="Ключ"
+            value="${escapeHtml(key)}"
+            required
+          >
+          <span class="field-separator">:</span>
+          <textarea
+            name="value__${messageIndex}"
+            placeholder="Текст сообщения"
+            required
+          >${escapeHtml(value)}</textarea>
+          <button type="button" class="btn-toggle-delete" onclick="removeMessageField(this)">×</button>
+        </div>
+      </div>`;
+      document.getElementById('messagesContainer').insertAdjacentHTML('beforeend', template);
+    }
+
+    function removeMessageField(button) {
+      button.closest('.message-group').remove();
+    }
+
+    function deleteCommand() {
+      const form = document.getElementById('editForm');
+      form.action = "{{ url_for('settings.delete_command') }}";
+      form.submit();
+    }
+
+    document.getElementById('addCommandModal').addEventListener('click', function (event) {
+      if (event.target.id === 'addCommandModal') {
+        closeAddCommandModal();
+      }
+    });
+
+    document.getElementById('editModal').addEventListener('click', function (event) {
+      if (event.target.id === 'editModal') {
+        closeEditModal();
+      }
+    });
+  </script>
+{% endblock %}

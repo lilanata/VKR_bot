@@ -1,0 +1,892 @@
+{% extends 'base.html' %}
+{% block title %}Вопросы{% endblock %}
+
+{% block content %}
+  <div class="card enhanced-card">
+    <div class="card-header">
+      <h2><span class="header-icon">❓</span>Трекер обращений</h2>
+      <div class="stats-mini">
+        <span class="stat-badge">
+          <span class="stat-icon">📊</span>
+          Всего: {{ questions|length }}
+        </span>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="filter_name" placeholder="Поиск по фамилии преподавателя"/>
+          <div class="search-line"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="questions-grid">
+      {% for q in questions %}
+        <div class="question-card"
+             data-name="{{ q.teacher|lower }}"
+             data-id="{{ q.id }}"
+             data-state="{{ q.state }}"
+             data-question="{{ q.question|e }}"
+             style="cursor: {{ 'pointer' if is_teacher else 'default' }};">
+
+          <div class="question-header">
+            <div class="user-avatar-section">
+              <div class="user-avatar">
+                {{ q.tg_username[0]|upper if q.tg_username else '?' }}
+              </div>
+              <div class="user-info-section">
+                <div class="user-name">{{ q.tg_username }}</div>
+                <div class="question-date">{{ q.created | timesince }}</div>
+              </div>
+            </div>
+            <div class="status-badge status-{{ q.state }}">
+              <span class="status-dot"></span>
+              {{ 'Закрыт' if q.state=='closed' else 'Открыт' }}
+            </div>
+          </div>
+
+          <div class="question-body">
+            <div class="question-field">
+              <div class="field-label">
+                <span class="field-icon">👨‍🏫</span>
+                Преподаватель
+              </div>
+              <div class="field-value teacher-name">{{ q.teacher }}</div>
+            </div>
+
+            <div class="question-field question-text-field">
+              <div class="field-label">
+                <span class="field-icon">💬</span>
+                Вопрос
+              </div>
+              <div class="field-value question-text">{{ q.question }}</div>
+            </div>
+          </div>
+
+          <div class="question-footer">
+            <div class="question-meta">
+              <span class="meta-item">
+                <span class="meta-icon">⏰</span>
+                {{ q.created | datetimeformat }}
+              </span>
+            </div>
+            {% if is_teacher %}
+              <div class="action-hint">
+                <span class="hint-text">Нажмите для ответа</span>
+                <span class="hint-arrow">→</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="card-glow"></div>
+        </div>
+      {% endfor %}
+
+      {% if not questions %}
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h3>Пока нет вопросов</h3>
+          <p>Когда появятся новые обращения, они будут отображены здесь</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div id="answerModal" class="modal-wrapper enhanced-modal" style="display:none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-card enhanced-modal-card">
+      <div class="modal-header">
+        <h3 id="qHeader">
+          <span class="modal-icon">💬</span>
+          Ответить на вопрос
+        </h3>
+        <button type="button" class="close-button" onclick="closeAnswerModal()">
+          <span class="close-icon">✕</span>
+        </button>
+      </div>
+
+      <form id="editForm" method="post">
+        <div class="form-section">
+          <div class="input-group enhanced-input">
+            <label>
+              <span class="label-icon">📊</span>
+              Новый статус
+            </label>
+            <div class="select-wrapper enhanced-select">
+              <select name="state" id="state" required>
+                <option value="waiting">Ожидает ответа</option>
+                <option value="closed">Закрыт</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="input-group enhanced-input">
+            <label>
+              <span class="label-icon">✍️</span>
+              Ответ
+            </label>
+            <div class="textarea-wrapper">
+              <textarea name="answer" id="answerText" rows="4" maxlength="1024" required
+                        placeholder="Введите ваш ответ..."></textarea>
+              <div class="textarea-border"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeAnswerModal()">
+            <span class="btn-icon">❌</span>
+            Отмена
+          </button>
+          <button type="submit" class="btn-primary">
+            <span class="btn-icon">💾</span>
+            Сохранить ответ
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <style>
+    .enhanced-card {
+      background: linear-gradient(135deg, var(--bg-darker) 0%, rgba(33, 35, 48, 0.95) 100%);
+      border: 1px solid rgba(0, 255, 136, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .enhanced-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), #4dabf7, var(--accent));
+      background-size: 200% 100%;
+      animation: borderFlow 3s linear infinite;
+    }
+
+    @keyframes borderFlow {
+      0% {
+        background-position: 200% 0;
+      }
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+    }
+
+    .card-header h2 {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.75rem;
+      background: linear-gradient(45deg, var(--accent), #4dabf7);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .header-icon {
+      font-size: 1.5em;
+    }
+
+    .stats-mini {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid rgba(0, 255, 136, 0.2);
+      border-radius: 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .stat-icon {
+      font-size: 1.1em;
+    }
+
+    .filter-section {
+      margin-bottom: 2rem;
+    }
+
+    .search-container {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.1em;
+      color: var(--accent);
+      z-index: 2;
+    }
+
+    .search-input-wrapper input {
+      width: 100%;
+      padding: 1rem 1rem 1rem 3rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 2px solid transparent;
+      color: var(--text);
+      border-radius: 1rem;
+      font-size: 1rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      z-index: 1;
+    }
+
+    .search-input-wrapper input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .search-line {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), #4dabf7);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .search-input-wrapper input:focus + .search-line {
+      transform: scaleX(1);
+    }
+
+    .questions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .question-card {
+      background: linear-gradient(135deg,
+      rgba(54, 57, 74, 0.9) 0%,
+      rgba(33, 35, 48, 0.7) 50%,
+      rgba(54, 57, 74, 0.9) 100%);
+      border: 1px solid rgba(0, 255, 136, 0.1);
+      border-radius: 1.25rem;
+      padding: 1.75rem;
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .question-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    .question-card:hover::before {
+      transform: translateX(100%);
+    }
+
+    .question-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: rgba(0, 255, 136, 0.3);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3),
+      0 0 30px rgba(0, 255, 136, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .card-glow {
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0, 255, 136, 0.05) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .question-card:hover .card-glow {
+      opacity: 1;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .user-avatar-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, var(--accent), #4dabf7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.25rem;
+      color: #000;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+    }
+
+    .question-card:hover .user-avatar {
+      transform: rotate(5deg) scale(1.1);
+      box-shadow: 0 6px 20px rgba(0, 255, 136, 0.5);
+    }
+
+    .user-info-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--text);
+    }
+
+    .question-date {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      opacity: 0.8;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .status-badge.status-waiting {
+      background: rgba(255, 193, 7, 0.2);
+      color: #ffc107;
+      border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .status-badge.status-closed {
+      background: rgba(40, 167, 69, 0.2);
+      color: #28a745;
+      border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s infinite;
+    }
+
+    .question-body {
+      margin-bottom: 1.5rem;
+    }
+
+    .question-field {
+      margin-bottom: 1rem;
+    }
+
+    .question-text-field {
+      margin-bottom: 0;
+    }
+
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .field-icon {
+      font-size: 1.1em;
+    }
+
+    .field-value {
+      color: var(--text);
+      line-height: 1.5;
+      padding: 0.75rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 0.75rem;
+      border-left: 3px solid var(--accent);
+    }
+
+    .teacher-name {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .question-text {
+      font-style: italic;
+      border-left-color: #4dabf7;
+    }
+
+    .question-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .question-meta {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .meta-icon {
+      font-size: 1em;
+    }
+
+    .action-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--accent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .question-card:hover .action-hint {
+      opacity: 1;
+    }
+
+    .hint-text {
+      font-weight: 500;
+    }
+
+    .hint-arrow {
+      font-size: 1.2em;
+      transition: transform 0.3s ease;
+    }
+
+    .question-card:hover .hint-arrow {
+      transform: translateX(3px);
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.7;
+    }
+
+    .empty-state h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .empty-state p {
+      font-size: 1rem;
+      opacity: 0.8;
+    }
+
+    .enhanced-modal {
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .enhanced-modal-card {
+      background: linear-gradient(135deg, var(--bg-darker) 0%, rgba(33, 35, 48, 0.95) 100%);
+      border: 1px solid rgba(0, 255, 136, 0.2);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
+      0 0 30px rgba(0, 255, 136, 0.1);
+      position: relative;
+      z-index: 1;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--accent);
+    }
+
+    .modal-icon {
+      font-size: 1.3em;
+    }
+
+    .close-button {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-button:hover {
+      background: rgba(255, 77, 77, 0.2);
+      color: var(--danger);
+      transform: rotate(90deg);
+    }
+
+    .form-section {
+      margin-bottom: 2rem;
+    }
+
+    .enhanced-input {
+      margin-bottom: 1.5rem;
+    }
+
+    .enhanced-input label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .label-icon {
+      font-size: 1.1em;
+    }
+
+    .enhanced-select select {
+      background: rgba(0, 0, 0, 0.3);
+      border: 2px solid rgba(0, 255, 136, 0.1);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .enhanced-select select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+    }
+
+    .textarea-wrapper {
+      position: relative;
+    }
+
+    .textarea-wrapper textarea {
+      width: 100%;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 2px solid rgba(0, 255, 136, 0.1);
+      border-radius: 0.75rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      resize: vertical;
+      transition: all 0.3s ease;
+    }
+
+    .textarea-wrapper textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+    }
+
+    .textarea-border {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), #4dabf7);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .textarea-wrapper textarea:focus + .textarea-border {
+      transform: scaleX(1);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+    }
+
+    .btn-primary, .btn-secondary {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: linear-gradient(45deg, var(--accent), #4dabf7);
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 255, 136, 0.3);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 77, 77, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(255, 77, 77, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 77, 77, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .btn-icon {
+      font-size: 1.1em;
+    }
+
+    @media (max-width: 768px) {
+      .questions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+
+      .search-input-wrapper {
+        max-width: 100%;
+      }
+
+      .question-footer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    const filterInput = document.getElementById('filter_name');
+    filterInput.addEventListener('input', () => {
+      const val = filterInput.value.trim().toLowerCase();
+      document.querySelectorAll('.question-card').forEach(card => {
+        const name = (card.dataset.name || '');
+        const shouldShow = name.includes(val);
+
+        if (shouldShow) {
+          card.style.display = '';
+          card.style.animation = 'fadeInUp 0.5s ease forwards';
+        } else {
+          card.style.animation = 'fadeOut 0.3s ease forwards';
+          setTimeout(() => {
+            if (!name.includes(filterInput.value.trim().toLowerCase())) {
+              card.style.display = 'none';
+            }
+          }, 300);
+        }
+      });
+    });
+
+    function openAnswerModal(card) {
+      const id = card.dataset.id;
+      const state = card.dataset.state;
+      const form = document.getElementById('editForm');
+      form.action = `{{ url_for('questions.answer_question', qid='__id__') }}`.replace('__id__', id);
+
+      document.getElementById('state').value = state;
+      document.getElementById('answerText').value = '';
+
+      const modal = document.getElementById('answerModal');
+      modal.style.display = 'flex';
+      modal.style.animation = 'modalFadeIn 0.3s ease forwards';
+
+      // Focus на textarea после открытия
+      setTimeout(() => {
+        document.getElementById('answerText').focus();
+      }, 100);
+    }
+
+    function closeAnswerModal() {
+      const modal = document.getElementById('answerModal');
+      modal.style.animation = 'modalFadeOut 0.3s ease forwards';
+      setTimeout(() => {
+        modal.style.display = 'none';
+      }, 300);
+    }
+
+    document.querySelectorAll('.question-card').forEach(card => {
+      card.addEventListener('click', () => {
+        if (card.style.cursor === 'pointer') {
+          openAnswerModal(card);
+        }
+      });
+    });
+
+    document.getElementById('answerModal').addEventListener('click', e => {
+      const modalCard = document.querySelector('.enhanced-modal-card');
+      if (!modalCard.contains(e.target)) {
+        closeAnswerModal();
+      }
+    });
+
+    // Добавляем CSS анимации
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+          transform: scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+      }
+
+      @keyframes modalFadeIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @keyframes modalFadeOut {
+        from {
+          opacity: 1;
+          transform: scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Добавляем эффект печатания в поиске
+    filterInput.addEventListener('focus', function () {
+      this.parentElement.style.transform = 'scale(1.02)';
+    });
+
+    filterInput.addEventListener('blur', function () {
+      this.parentElement.style.transform = 'scale(1)';
+    });
+  </script>
+{% endblock %}
