@@ -1,0 +1,676 @@
+{% extends 'base.html' %}
+{% block title %}Рассылка уведомлений{% endblock %}
+
+{% block content %}
+  <style>
+    .announcements-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      font-family: var(--font-family);
+    }
+
+    .page-header {
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-glow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent-gradient);
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    .page-header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem 0;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .page-header .emoji {
+      font-size: 3rem;
+      background: none;
+      -webkit-background-clip: unset;
+      background-clip: unset;
+      color: var(--accent-primary);
+      filter: drop-shadow(0 0 10px rgba(0, 212, 170, 0.3));
+    }
+
+    .page-header p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+
+    .form-container {
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+    }
+
+    .section-divider {
+      display: flex;
+      align-items: center;
+      margin: 2.5rem 0;
+      text-align: center;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .section-divider::before,
+    .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+      opacity: 0.3;
+    }
+
+    .section-divider span {
+      padding: 0.5rem 1.5rem;
+      background: var(--bg-secondary);
+      border-radius: 25px;
+      border: 1px solid rgba(0, 212, 170, 0.2);
+      color: var(--accent-primary);
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(0, 212, 170, 0.1);
+    }
+
+    .input-section {
+      margin-bottom: 2.5rem;
+      position: relative;
+    }
+
+    .input-section label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .multi-select {
+      width: 100%;
+      min-height: 140px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      font-size: 1rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+      font-family: var(--font-family);
+    }
+
+    .multi-select:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.15), inset 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: var(--bg-tertiary);
+    }
+
+    .multi-select option {
+      padding: 0.75rem;
+      margin: 0.25rem 0;
+      border-radius: 8px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .multi-select option:hover {
+      background: var(--accent-primary);
+      color: #000;
+    }
+
+    .multi-select option:checked {
+      background: var(--accent-gradient);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .helper-text {
+      margin-top: 0.75rem;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(0, 212, 170, 0.05);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent-primary);
+    }
+
+    .helper-text::before {
+      content: '💡';
+      font-size: 1.1rem;
+    }
+
+    .message-section {
+      margin-bottom: 2.5rem;
+    }
+
+    .message-textarea {
+      width: 100%;
+      min-height: 140px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--border-radius);
+      padding: 1.25rem;
+      font-size: 1rem;
+      font-family: var(--font-family);
+      resize: vertical;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+      line-height: 1.6;
+    }
+
+    .message-textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.15), inset 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: var(--bg-tertiary);
+    }
+
+    .message-textarea::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+      line-height: 1.6;
+    }
+
+    .char-counter {
+      text-align: right;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(0, 212, 170, 0.05);
+      border-radius: 4px;
+      border: 1px solid rgba(0, 212, 170, 0.1);
+    }
+
+    .submit-section {
+      text-align: center;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .submit-btn {
+      background: var(--accent-gradient);
+      color: #000;
+      border: none;
+      padding: 1.25rem 3rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 25px rgba(0, 212, 170, 0.3);
+      position: relative;
+      overflow: hidden;
+      font-family: var(--font-family);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(0, 212, 170, 0.4);
+    }
+
+    .submit-btn:hover::before {
+      left: 100%;
+    }
+
+    .submit-btn:active {
+      transform: translateY(-1px);
+    }
+
+    .submit-btn.loading {
+      animation: pulse 1.5s ease-in-out infinite;
+      cursor: not-allowed;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent-gradient);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+      border-color: rgba(0, 212, 170, 0.2);
+    }
+
+    .stat-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .stat-label {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .recipients-preview {
+      background: rgba(0, 212, 170, 0.05);
+      border: 1px solid rgba(0, 212, 170, 0.2);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      display: none;
+    }
+
+    .recipients-preview.show {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.8;
+        transform: scale(0.98);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .announcements-container {
+        padding: 1rem;
+      }
+
+      .page-header {
+        padding: 1.5rem;
+      }
+
+      .page-header h1 {
+        font-size: 2rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+      }
+
+      .form-container {
+        padding: 1.5rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .submit-btn {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+      }
+    }
+
+    /* Улучшенные анимации */
+    .input-section {
+      animation: slideInUp 0.6s ease forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .input-section:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+
+    .input-section:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .input-section:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes slideInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Эффект фокуса для всех интерактивных элементов */
+    .multi-select:focus,
+    .message-textarea:focus {
+      box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.15),
+      0 0 20px rgba(0, 212, 170, 0.1),
+      inset 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+
+  <div class="announcements-container">
+    <div class="page-header">
+      <h1><span class="emoji">📣</span> Отправка анонсов / уведомлений</h1>
+      <p>Выберите получателей и отправьте важные сообщения всем студентам или отдельным группам</p>
+    </div>
+
+    <div class="form-container">
+      <form method="POST" action="{{ url_for('announcements.send_announcements') }}">
+
+        <!-- Секция 1: Выбор групп -->
+        <div class="input-section">
+          <label for="groups-select">🎯 Выберите группы (можно несколько):</label>
+          <select name="groups" id="groups-select" multiple class="multi-select" size="5">
+            {% for grp in groups %}
+              <option value="{{ grp }}">{{ grp }}</option>
+            {% endfor %}
+          </select>
+          <div class="helper-text">
+            Студенты из выбранных групп получат сообщение
+          </div>
+        </div>
+
+        <div class="section-divider">
+          <span>ИЛИ</span>
+        </div>
+
+        <!-- Секция 2: Выбор отдельных студентов -->
+        <div class="input-section">
+          <label for="students-select">👥 Выберите отдельных студентов:</label>
+          <select name="students" id="students-select" multiple class="multi-select" size="8">
+            {% for stu in students %}
+              <option value="{{ stu.telegram_id }}">
+                {{ stu.telegram_username }}{% if stu.group %} ({{ stu.group }}){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="helper-text">
+            Выбранным студентам придёт уведомление независимо от группы
+          </div>
+        </div>
+
+        <div class="section-divider">
+          <span>📝</span>
+        </div>
+
+        <!-- Секция 3: Текст сообщения -->
+        <div class="message-section input-section">
+          <label for="message-text">✍️ Текст сообщения:</label>
+          <textarea
+              name="message"
+              id="message-text"
+              rows="6"
+              class="message-textarea"
+              placeholder="Введите текст анонса или уведомления...&#10;&#10;Например:&#10;📚 Уважаемые студенты! Напоминаем о важной лекции завтра в 10:00.&#10;📍 Аудитория: 205&#10;📖 Тема: 'Современные технологии веб-разработки'&#10;&#10;⚠️ Обязательное посещение!"
+              required
+          ></textarea>
+          <div class="recipients-preview" id="recipients-preview">
+            <strong>Предварительный просмотр получателей:</strong>
+            <div id="recipients-list"></div>
+          </div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number">{{ groups|length }}</div>
+            <div class="stat-label">Групп доступно</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">{{ students|length }}</div>
+            <div class="stat-label">Студентов в системе</div>
+          </div>
+        </div>
+
+        <!-- Кнопка отправки -->
+        <div class="submit-section">
+          <button type="submit" class="submit-btn" id="submit-btn">
+            🚀 Отправить уведомления
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.querySelector('form');
+      const submitBtn = document.querySelector('#submit-btn');
+      const messageTextarea = document.querySelector('#message-text');
+      const groupsSelect = document.querySelector('#groups-select');
+      const studentsSelect = document.querySelector('#students-select');
+      const recipientsPreview = document.querySelector('#recipients-preview');
+      const recipientsList = document.querySelector('#recipients-list');
+
+      // Обновление счетчика символов
+      function updateCharCount() {
+        const count = messageTextarea.value.length;
+        const maxLength = 4000;
+
+        let counter = document.querySelector('.char-counter');
+        if (!counter) {
+          counter = document.createElement('div');
+          counter.className = 'char-counter';
+          messageTextarea.parentNode.appendChild(counter);
+        }
+
+        const percentage = (count / maxLength) * 100;
+        counter.textContent = `${count}/${maxLength} символов`;
+
+        if (percentage > 90) {
+          counter.style.color = 'var(--danger)';
+          counter.style.borderColor = 'var(--danger)';
+        } else if (percentage > 75) {
+          counter.style.color = 'var(--warning)';
+          counter.style.borderColor = 'var(--warning)';
+        } else {
+          counter.style.color = 'var(--text-muted)';
+          counter.style.borderColor = 'rgba(0, 212, 170, 0.1)';
+        }
+      }
+
+      // Подсчет и предварительный просмотр получателей
+      function updateRecipientCount() {
+        const selectedGroups = Array.from(groupsSelect.selectedOptions);
+        const selectedStudents = Array.from(studentsSelect.selectedOptions);
+
+        let totalCount = selectedStudents.length;
+        let groupsCount = 0;
+
+        // Примерный подсчет студентов в группах
+        selectedGroups.forEach(option => {
+          const groupName = option.value;
+          // Подсчитываем реальное количество студентов в группе
+          const studentsInGroup = Array.from(studentsSelect.options).filter(opt =>
+            opt.text.includes(`(${groupName})`)
+          ).length;
+          groupsCount += studentsInGroup;
+        });
+
+        totalCount += groupsCount;
+
+        // Обновляем текст кнопки
+        if (totalCount > 0) {
+          submitBtn.innerHTML = `🚀 Отправить уведомления (≈${totalCount})`;
+
+          // Показываем превью получателей
+          let previewText = '';
+          if (selectedGroups.length > 0) {
+            previewText += `Группы: ${selectedGroups.map(opt => opt.value).join(', ')} (≈${groupsCount} студентов)`;
+          }
+          if (selectedStudents.length > 0) {
+            if (previewText) previewText += '<br>';
+            previewText += `Отдельные студенты: ${selectedStudents.length}`;
+          }
+
+          recipientsList.innerHTML = previewText;
+          recipientsPreview.classList.add('show');
+        } else {
+          submitBtn.innerHTML = '🚀 Отправить уведомления';
+          recipientsPreview.classList.remove('show');
+        }
+      }
+
+      // Валидация формы
+      function validateForm() {
+        const hasGroups = groupsSelect.selectedOptions.length > 0;
+        const hasStudents = studentsSelect.selectedOptions.length > 0;
+        const hasMessage = messageTextarea.value.trim().length > 0;
+
+        const isValid = (hasGroups || hasStudents) && hasMessage;
+
+        submitBtn.disabled = !isValid;
+        if (!isValid) {
+          submitBtn.style.opacity = '0.6';
+          submitBtn.style.cursor = 'not-allowed';
+        } else {
+          submitBtn.style.opacity = '1';
+          submitBtn.style.cursor = 'pointer';
+        }
+      }
+
+      // Добавляем обработчики событий
+      messageTextarea.addEventListener('input', () => {
+        updateCharCount();
+        validateForm();
+      });
+
+      groupsSelect.addEventListener('change', () => {
+        updateRecipientCount();
+        validateForm();
+      });
+
+      studentsSelect.addEventListener('change', () => {
+        updateRecipientCount();
+        validateForm();
+      });
+
+      // Анимация отправки
+      form.addEventListener('submit', function (e) {
+        if (submitBtn.disabled) {
+          e.preventDefault();
+          return;
+        }
+
+        submitBtn.classList.add('loading');
+        submitBtn.innerHTML = '⏳ Отправляем сообщения...';
+        submitBtn.disabled = true;
+      });
+
+      // Автоматическое изменение высоты textarea
+      messageTextarea.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 300) + 'px';
+      });
+
+      // Инициализация
+      updateCharCount();
+      updateRecipientCount();
+      validateForm();
+
+      // Эффект печатной машинки для placeholder
+      const placeholder = messageTextarea.getAttribute('placeholder');
+      let i = 0;
+      messageTextarea.setAttribute('placeholder', '');
+
+      function typeWriter() {
+        if (i < placeholder.length) {
+          messageTextarea.setAttribute('placeholder',
+            messageTextarea.getAttribute('placeholder') + placeholder.charAt(i)
+          );
+          i++;
+          setTimeout(typeWriter, 20);
+        }
+      }
+
+      setTimeout(typeWriter, 1000);
+    });
+  </script>
+{% endblock %}
